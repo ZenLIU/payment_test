@@ -1,0 +1,23 @@
+{
+  "name": "payment_test",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "body-parser": "~1.12.0",
+    "braintree": "^2.0.2",
+    "card-validator": "^4.0.0",
+    "config": "^1.25.1",
+    "cookie-parser": "~1.3.4",
+    "debug": "~2.1.1",
+    "express": "~4.12.2",
+    "hbs": "~2.9.0",
+    "morgan": "~1.5.1",
+    "mysql": "^2.13.0",
+    "paypal-rest-sdk": "^1.7.1",
+    "redis": "^2.6.5",
+    "serve-favicon": "~2.2.0"
+  }
+}

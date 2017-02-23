@@ -1,0 +1,24 @@
+{
+	"port": 9999,
+	"mysql":{
+		"host":"127.0.0.1",
+		"user":"root",
+		"password":"",
+		"database":"payment_test"
+	},
+	"braintree":{
+	  "merchantId": "83dwr322z4wcy63s",
+	  "publicKey": "7gbk9bnv22k6fdvd",
+	  "privateKey": "4ef30a2209674d79c1a4316e8433d171"
+	},
+	"paypal":{
+		"mode": "sandbox", 
+	  "client_id": "AY8nvxbfPCwfuRwN099HvL_0S1inkWcf29g3_nvbLyqFTE1UfqiPoS3GWOywOdkQQubeTH1YREBInQdL",
+	  "client_secret": "EA6MFDMKhCv2_JzJJQvI-JTtVbZjRE6ELR2ozc5j6Qk4ZNkwoPPLi2XN-kLdq_Pbf4woQLlqyPencQbR"
+	},
+	"redis":{
+		"host":"127.0.0.1",
+		"password":"",
+		"db": 0
+	}
+}

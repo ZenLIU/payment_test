@@ -1,0 +1,216 @@
+<div class="container">
+	<form id="payment-form" method="post" action="/checkout">
+    <h2>Create Payment</h2>
+    <h3>Order Section</h3>
+    <div class="form-group">
+			<label for="inputName" class="sr-only">Customer name</label>
+	    <input type="text" id="inputName" class="form-control" name="customer_name" placeholder="Customer name" maxlength="255" required autofocus>
+    </div>
+    <div class="form-group">
+			<label for="inputPhone" class="sr-only">Customer phone</label>
+	    <input type="phone" id="inputPhone" class="form-control" name="customer_phone" placeholder="Customer phone" maxlength="10" required number >
+    </div>
+    <div class="form-group">
+			<label for="inputCurrency" class="sr-only">Currency</label>
+			<select class="form-control" id="inputCurrency" name="currency">
+				<option value="HKD">HKD</option>
+				<option value="USD">USD</option>
+				<option value="AUD">AUD</option>
+				<option value="EUR">EUR</option>
+				<option value="JPY">JPY</option>
+				<option value="CNY">CNY</option>
+			</select>	    
+    </div>
+    <div class="form-group">
+			<label for="inputPrice" class="sr-only">Price</label>
+	    <input type="number" id="inputPrice" name="price" class="form-control" placeholder="Price" required >
+    </div>
+    <h3>Payment Section</h3>
+    <div class="form-group">
+			<label for="inputCreditCardName" class="sr-only">Credit card holder name</label>
+	    <input type="text" id="inputCreditCardName" name="credit_card_name" class="form-control" placeholder="Credit card holder name" maxlength="255" required>
+    </div>
+    <div class="form-group">
+			<label for="inputCreditCardNo" class="sr-only">Credit card number</label>
+	    <input type="number" id="inputCreditCardNo" name="credit_card_no" class="form-control" placeholder="Credit card number" required>
+    </div>
+    <div class="form-group">
+			<label for="inputCreditCardExp" class="sr-only">Credit card expiration</label>
+	    <input type="text" id="inputCreditCardExp" name="credit_card_exp" class="form-control" placeholder="Credit card expiration (MM/YYYY)" maxlength="7" required>
+    </div>
+    <div class="form-group">
+			<label for="inputCreditCardCCV" class="sr-only">Credit card CCV</label>
+	    <input type="text" id="inputCreditCardCCV" name="credit_card_ccv" class="form-control" placeholder="Credit card CCV" required maxlength="5" data-rule-digits=”true”>
+    </div>
+   	<input type="hidden" name="nonce" />
+   	<input type="hidden" name="gateway" />
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+  </form>
+</div> <!-- /container -->
+
+<!-- Modal -->
+<div class="modal fade" id="msgModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="modalTitle"></h4>
+      </div>
+      <div class="modal-body" id="modalBody">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>        
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="http://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+
+<script type="text/javascript" src="/js/card-validator.js"></script>
+<script type="text/javascript" src="/js/validation.js"></script>
+
+<!-- braintree lib -->
+<script src="https://js.braintreegateway.com/web/3.8.0/js/client.min.js"></script>
+
+
+
+<script>
+	var card = null;
+  $(document).ready(function(){
+  	//set validator style compaitable with bootstrap style
+  	$.validator.setDefaults({
+		    errorElement: "span",
+		    errorClass: "help-block",
+		    highlight: function (element, errorClass, validClass) {
+		        $(element).closest('.form-group').addClass('has-error');
+		    },
+		    unhighlight: function (element, errorClass, validClass) {
+		        $(element).closest('.form-group').removeClass('has-error');
+		    },
+		    errorPlacement: function (error, element) {
+		        if (element.parent('.input-group').length || element.prop('type') === 'checkbox' || element.prop('type') === 'radio') {
+		            error.insertAfter(element.parent());
+		        } else {
+		            error.insertAfter(element);
+		        }
+		    }
+		});
+
+  	$.validator.addMethod("creditCard", function(val,el){
+	  	//validate creditcard
+			result = cardValidator.number(val);
+			if (result.isValid){
+				card = result.card;
+			}else{
+				card = null;
+			}
+			return result.isValid;
+  	}, "Invalid credit card number.");
+
+  	$.validator.addMethod("phone", function(val,el){
+	  	//validate phone
+			return this.optional(el) || validation.validatePhone(val);
+  	}, "Invalid phone number.");
+
+  	$.validator.addMethod("expire", function(val,el){
+	  	//validate phone
+	  	return validation.validateExpire(val);
+  	}, "Invalid credit card expiry.");
+
+
+	  var validator = $("#payment-form").validate({
+	  	rules: {
+	  		credit_card_no: "creditCard",
+	  		customer_phone: "phone",
+	  		credit_card_exp: "expire"
+	  	},
+	  	submitHandler: function(form){
+	  		if (card){
+	  			//AMEX must use USD
+	  			if (card.type=="american-express" && form.currency.value != "USD"){
+	  				//invalid
+						showErr("AMEX is possible to use only for USD!");
+	  			}else if (form.currency.value == "USD" || form.currency.value == "EUR" || form.currency.value == "AUD"){
+	  				//paypal
+	  				form.gateway.value = "paypal";
+	  				ajaxSubmit(form);
+	  			}else{
+	  				//braintree
+	  				//need to create nonce from braintree server
+	  				window.braintree.client.create({
+	  					authorization: "sandbox_d6ft8fkg_83dwr322z4wcy63s"
+	  				}, function(createErr, clientInstance){
+	  					if (createErr != null){
+	  						console.log(createErr);
+	  						showErr(createErr);
+	  						return;
+	  					}
+
+	  					//prepare the payment data
+	  					var data = {
+						    creditCard: {
+						      number: form.credit_card_no.value,
+						      cvv: form.credit_card_ccv.value,
+						      expirationDate: form.credit_card_exp.value,
+						      billingAddress: {
+						      }
+						    }
+						  };
+
+						  clientInstance.request({
+						    endpoint: 'payment_methods/credit_cards',
+						    method: 'post',
+						    data: data
+						  }, function (requestErr, response) {
+						    // More detailed example of handling API errors: https://codepen.io/braintree/pen/MbwjdM
+						    if (requestErr) { 
+						    	console.log(requestErr);
+						    	showErr(createErr);
+	  							return;
+						    }
+						    //console.log(response);
+						    //console.log('Got nonce:', response.creditCards[0].nonce);
+
+						    //submit the nonce to server
+						    form.nonce.value = response.creditCards[0].nonce;
+						    form.gateway.value = "braintree";
+						    ajaxSubmit(form);
+						  });
+	  				});
+	  			}
+
+	  			//if currency is USD, EUR or AUD, use paypal
+
+	  		}
+	  	}
+	  });
+	});
+
+	function showErr(msg){
+		showMsg("Error", msg);
+	}
+
+	function showMsg(title, msg){
+		$('#modalTitle').html(title);
+		$('#modalBody').html(msg);
+		$('#msgModal').modal('toggle');
+	}
+
+	function ajaxSubmit(form){
+		$.ajax({
+			type: "POST",
+			url: "/checkout",
+			data: $(form).serialize(),
+			success: function(data){
+				if (data.success){
+					showMsg("Payment Success", "Payment Success, payment reference code: " + data.payment_ref);
+				}else{
+					showErr(data.err_msg);
+				}
+			}
+		});
+	}
+
+</script>
