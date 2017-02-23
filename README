@@ -7,6 +7,8 @@
 
 3. update configs in `config/default.conf`
 
+4. start the application by `npm start`
+
 ## Third party libraries:
 
 paypal node sdk:
