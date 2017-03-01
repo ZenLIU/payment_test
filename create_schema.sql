@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS `payment_test`.`orders` (
   `price` VARCHAR(45) NULL,
   `payment_gateway_id` VARCHAR(45) NULL,
   `ref_code` VARCHAR(45) NOT NULL,
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` DATETIME NULL,
+  `updated_at` DATETIME NULL,
   PRIMARY KEY (`id`),
   INDEX(`ref_code`)
 );
